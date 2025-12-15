@@ -60,7 +60,7 @@ Website ini mengimplementasikan sistem role-based access control (RBAC):
 
 1. Clone repository
 ```bash
-git clone https://github.com/namagithub/laravel_ecommerce.git
+git clone https://github.com/aji455/tubes_fashioniconpwt.git
 cd laravel_ecommerce
 ```
 
@@ -110,7 +110,7 @@ Admin panel menggunakan Filament dan dapat diakses melalui:
 - URL: `http://localhost:8000/admin`
 - Default credentials akan dibuat saat seeding database
 - email : admin@fip.com
-- pass : adminfip
+- pass : admin123
 
 ## Konfigurasi Payment Gateway
 
