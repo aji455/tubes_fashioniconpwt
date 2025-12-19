@@ -59,11 +59,6 @@ Route::middleware(\App\Http\Middleware\CustomerOnly::class)->group(function () {
             ->name('payment.success');
 
 
-
-
-
-
-
         // Profile
         Route::get('/profile', [ProfileController::class, 'index'])->name('profile.index');
         Route::get('/profile/edit', [ProfileController::class, 'edit'])->name('profile.edit');

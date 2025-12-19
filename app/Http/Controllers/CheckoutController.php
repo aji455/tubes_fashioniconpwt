@@ -241,11 +241,7 @@ class CheckoutController extends Controller
             ->firstOrFail();
 
         // Update status pembayaran & status order di db
-        $order->update([
-            'shipping_status' => 'packed',
-            'payment_status' => 'paid',
-            'status' => 'process',
-        ]);
+        
 
         // Kurangi stock produk
         foreach ($order->items as $item) {
@@ -257,4 +253,60 @@ class CheckoutController extends Controller
 
         return view('checkout.success', compact('order'));
     }
+
+    public function callback(Request $request)
+    {
+        \Log::info('MIDTRANS CALLBACK', $request->all());
+
+        $serverKey = env('MIDTRANS_SERVER_KEY'); 
+
+        $expected = hash(
+            'sha512',
+            $request->order_id .
+            $request->status_code .
+            $request->gross_amount .
+            $serverKey
+        );
+
+        if ($expected !== $request->signature_key) {
+            \Log::error('INVALID SIGNATURE');
+            return response()->json(['message' => 'Invalid signature'], 403);
+        }
+
+        // Extract order id (ORDER-{id}-{timestamp})
+        $parts = explode('-', $request->order_id);
+        $orderId = $parts[1] ?? null;
+
+        if (!$orderId) {
+            \Log::error('ORDER ID PARSE FAIL');
+            return response()->json(['message' => 'Order parse failed'], 422);
+        }
+
+        $order = Order::find($orderId);
+
+        if (!$order) {
+            \Log::error('ORDER NOT FOUND');
+            return response()->json(['message' => 'Order not found'], 404);
+        }
+
+        // Update status
+        if (in_array($request->transaction_status, ['capture', 'settlement'])) {
+            $order->update([
+                'payment_status'  => 'paid',
+                'shipping_status' => 'packed',
+                'status'          => 'process',
+            ]);
+        }
+
+        if (in_array($request->transaction_status, ['deny', 'cancel', 'expire'])) {
+            $order->update([
+                'payment_status'  => 'failed',
+                'shipping_status' => 'pending',
+                'status'          => 'pending',
+            ]);
+        }
+
+        return response()->json(['message' => 'OK'], 200);
+    }
+
 }
